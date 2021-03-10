@@ -1,10 +1,5 @@
 import fetch from 'cross-fetch';
 
-type AuthParams = {
-  appSlug: string;
-  userId: string;
-}
-
 type BodyType = {
   api_key?: string;
   key?: string;
@@ -47,21 +42,26 @@ const makeRequest = async (
   return response.json();
 };
 
-function AngelListAppstoreApiClient({ apiKey }: { apiKey: string }) {
-  const authorizeForUser = async ({ appSlug, userId }: AuthParams) => {
+function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: string, appSlug: string, userId: string }) {
+  const authorization = { token: null, user: {} };
+
+  const authorizeForUser = async () => {
     const body = {
       api_key: apiKey,
       app_slug: appSlug,
       user_id: userId,
     };
 
-    return makeRequest('auth', body);
+    const { token } = await makeRequest('auth', body);
+    authorization.token = token;
   };
 
-  const getUserData = async ({ key, token }: GetUserDataParams) => {
+  const getUserData = async ({ key }: GetUserDataParams) => {
+    await authorizeForUser();
+
     const body = {
       key,
-      token,
+      token: authorization.token,
     };
 
     return makeRequest('get', body);
