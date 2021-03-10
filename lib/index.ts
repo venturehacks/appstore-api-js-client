@@ -3,7 +3,7 @@ import fetch from 'cross-fetch';
 type BodyType = {
   api_key?: string;
   key?: string;
-  token?: string;
+  token?: string | null;
   user_id?: string;
   value? :string;
 }
