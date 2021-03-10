@@ -47,7 +47,7 @@ const makeRequest = async (
   return response.json();
 };
 
-function AngelListAppstoreApiClient(apiKey) {
+function AngelListAppstoreApiClient({ apiKey }: { apiKey: string }) {
   const authorizeForUser = async ({ appSlug, userId }: AuthParams) => {
     const body = {
       api_key: apiKey,
