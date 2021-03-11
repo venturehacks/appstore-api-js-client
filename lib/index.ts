@@ -36,8 +36,6 @@ const makeRequest = async (
 };
 
 function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: string, appSlug: string, userId: string }) {
-  const authorization = { token: null, user: {} };
-
   const authorizeForUser = async () => {
     const body = {
       api_key: apiKey,
@@ -45,11 +43,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: strin
       user_id: userId,
     };
 
-    const { token, user } = await makeRequest('auth', body);
-    authorization.token = token;
-    authorization.user = user;
-
-    return authorization;
+    return makeRequest('auth', body);
   };
 
   const getUserData = async ({ key, token }: RequestParams) => {
@@ -75,33 +69,26 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: strin
     return makeRequest('submit', { token });
   };
 
-  const retryableRequest = (request: RequestType) => async (requestParams: RequestParams) => {
+  const makeRetryableRequest = (request: RequestType) => async (params: RequestParams) => {
     let response;
-    let token = authorization.token;
 
-    if (!token) {
-      ({ token } = await authorizeForUser());
+    try {
+      response = request(params);
+    } catch {
+      const authorization = await authorizeForUser();
+      response = request(params);
+
+      response = { ...response, authorization };
     }
 
-    if (token) {
-      const params = { ...requestParams, token };
-
-      try {
-        response = request(params);
-      } catch {
-        await authorizeForUser();
-        response = request(params);
-      }
-
-      return response;
-    }
+    return response;
   }
 
   return {
     authorizeForUser,
-    getUserData: retryableRequest(getUserData),
-    setUserData: retryableRequest(setUserData),
-    submit: retryableRequest(submit),
+    getUserData: makeRetryableRequest(getUserData),
+    setUserData: makeRetryableRequest(setUserData),
+    submit: makeRetryableRequest(submit),
   };
 }
 
