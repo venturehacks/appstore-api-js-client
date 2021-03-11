@@ -8,6 +8,13 @@ type BodyType = {
   value? :string;
 }
 
+type ClientParams = {
+  apiKey: string;
+  appSlug: string;
+  env: string;
+  userId: string;
+}
+
 type RequestParams = {
   key?: string;
   token: string;
@@ -17,11 +24,10 @@ type RequestParams = {
 type RequestType = (requestParams: RequestParams) => Promise<any>;
 
 const makeRequest = async (
-  path: string,
+  url: string,
   body: BodyType,
   method = 'POST',
 ) => {
-  const url = `https://angel.dev/appstore/api/${path}`;
   const response = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
@@ -35,7 +41,9 @@ const makeRequest = async (
   return response.json();
 };
 
-function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: string, appSlug: string, userId: string }) {
+function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientParams) {
+  const baseUrl = env === 'production' ? 'https://angel.co/appstore/api' : 'https://angel.dev/appstore/api';
+
   const authorizeForUser = async () => {
     const body = {
       api_key: apiKey,
@@ -43,7 +51,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: strin
       user_id: userId,
     };
 
-    return makeRequest('auth', body);
+    return makeRequest(`${baseUrl}/auth`, body);
   };
 
   const getUserData = async ({ key, token }: RequestParams) => {
@@ -52,7 +60,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: strin
       token,
     };
 
-    return makeRequest('get', body);
+    return makeRequest(`${baseUrl}/get`, body);
   };
 
   const setUserData = async ({ key, token, value }: RequestParams) => {
@@ -62,11 +70,11 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: strin
       value,
     };
 
-    return makeRequest('set', body);
+    return makeRequest(`${baseUrl}/set`, body);
   };
 
   const submit = async ({ token }: RequestParams) => {
-    return makeRequest('submit', { token });
+    return makeRequest(`${baseUrl}/submit`, { token });
   };
 
   const makeRetryableRequest = (request: RequestType) => async (params: RequestParams) => {
