@@ -44,7 +44,7 @@ const makeRequest = async (
 function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientParams) {
   const baseUrl = env === 'production' ? 'https://angel.co/appstore/api' : 'https://angel.dev/appstore/api';
 
-  const authorizeForUser = async () => {
+  const authenticate = async () => {
     const body = {
       api_key: apiKey,
       app_slug: appSlug,
@@ -83,7 +83,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientPara
     try {
       response = await request(params);
     } catch {
-      const authorization = await authorizeForUser();
+      const authorization = await authenticate();
       response = await request({ ...params, token: authorization.token });
 
       response = { ...response, authorization };
@@ -93,7 +93,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientPara
   }
 
   return {
-    authorizeForUser,
+    authenticate,
     getUserData: makeRetryableRequest(getUserData),
     setUserData: makeRetryableRequest(setUserData),
     submit: makeRetryableRequest(submit),

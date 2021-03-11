@@ -58,14 +58,14 @@ describe('AngelListAppstoreApiClient', () => {
     });
   }
 
-  describe('authorizeForUser', () => {
+  describe('authenticate', () => {
     describe('a successful request', () => {
       beforeEach(() => {
         fetch.mockImplementation(mockFetch({ token, user }));
       });
 
       it('returns a token and user data', async () => {
-        const response = await apiClient.authorizeForUser();
+        const response = await apiClient.authenticate();
         expect(response).toEqual({ token, user })
       });
     });
@@ -76,7 +76,7 @@ describe('AngelListAppstoreApiClient', () => {
       });
 
       it('throws an error', async () => {
-        await expect(apiClient.authorizeForUser()).rejects.toThrow('Bad response from server');
+        await expect(apiClient.authenticate()).rejects.toThrow('Bad response from server');
       });
     });
   });
