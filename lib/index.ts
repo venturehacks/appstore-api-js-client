@@ -73,10 +73,10 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: strin
     let response;
 
     try {
-      response = request(params);
+      response = await request(params);
     } catch {
       const authorization = await authorizeForUser();
-      response = request(params);
+      response = await request({ ...params, token: authorization.token });
 
       response = { ...response, authorization };
     }
