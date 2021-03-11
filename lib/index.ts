@@ -8,20 +8,13 @@ type BodyType = {
   value? :string;
 }
 
-type GetUserDataParams = {
-  key: string;
+type RequestParams = {
+  key?: string;
   token: string;
+  value?: string;
 }
 
-type SetUserDataParams = {
-  key: string;
-  token: string;
-  value: string;
-}
-
-type SubmitParams = {
-  token: string;
-}
+type RequestType = (requestParams: RequestParams) => Promise<any>;
 
 const makeRequest = async (
   path: string,
@@ -52,22 +45,23 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: strin
       user_id: userId,
     };
 
-    const { token } = await makeRequest('auth', body);
+    const { token, user } = await makeRequest('auth', body);
     authorization.token = token;
+    authorization.user = user;
+
+    return authorization;
   };
 
-  const getUserData = async ({ key }: GetUserDataParams) => {
-    await authorizeForUser();
-
+  const getUserData = async ({ key, token }: RequestParams) => {
     const body = {
       key,
-      token: authorization.token,
+      token,
     };
 
     return makeRequest('get', body);
   };
 
-  const setUserData = async ({ key, token, value }: SetUserDataParams) => {
+  const setUserData = async ({ key, token, value }: RequestParams) => {
     const body = {
       key,
       token,
@@ -77,15 +71,37 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, userId }: { apiKey: strin
     return makeRequest('set', body);
   };
 
-  const submit = async ({ token }: SubmitParams) => {
+  const submit = async ({ token }: RequestParams) => {
     return makeRequest('submit', { token });
   };
 
+  const retryableRequest = (request: RequestType) => async (requestParams: RequestParams) => {
+    let response;
+    let token = authorization.token;
+
+    if (!token) {
+      ({ token } = await authorizeForUser());
+    }
+
+    if (token) {
+      const params = { ...requestParams, token };
+
+      try {
+        response = request(params);
+      } catch {
+        await authorizeForUser();
+        response = request(params);
+      }
+
+      return response;
+    }
+  }
+
   return {
     authorizeForUser,
-    getUserData,
-    setUserData,
-    submit,
+    getUserData: retryableRequest(getUserData),
+    setUserData: retryableRequest(setUserData),
+    submit: retryableRequest(submit),
   };
 }
 
