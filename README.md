@@ -56,3 +56,12 @@ try {
  handleError(err)
 }
 ```
+# Running tests
+This project uses [Jest](https://github.com/facebook/jest) to run automated tests. In order to run the suite, from the project directory, first install all packages:
+```
+yarn install
+```
+Then:
+```
+yarn test
+```
