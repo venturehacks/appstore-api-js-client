@@ -1,39 +1,33 @@
 import fetch from 'cross-fetch';
 
-type AuthParams = {
-  appSlug: string;
-  userId: string;
-}
-
 type BodyType = {
   api_key?: string;
   key?: string;
-  token?: string;
+  token?: string | null;
   user_id?: string;
   value? :string;
 }
 
-type GetUserDataParams = {
-  key: string;
-  token: string;
+type ClientParams = {
+  apiKey: string;
+  appSlug: string;
+  env: string;
+  userId: string;
 }
 
-type SetUserDataParams = {
-  key: string;
+type RequestParams = {
+  key?: string;
   token: string;
-  value: string;
+  value?: string;
 }
 
-type SubmitParams = {
-  token: string;
-}
+type RequestType = (requestParams: RequestParams) => Promise<any>;
 
 const makeRequest = async (
-  path: string,
+  url: string,
   body: BodyType,
   method = 'POST',
 ) => {
-  const url = `https://angel.dev/appstore/api/${path}`;
   const response = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
@@ -47,45 +41,62 @@ const makeRequest = async (
   return response.json();
 };
 
-function AngelListAppstoreApiClient({ apiKey }: { apiKey: string }) {
-  const authorizeForUser = async ({ appSlug, userId }: AuthParams) => {
+function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientParams) {
+  const baseUrl = env === 'production' ? 'https://angel.co/appstore/api' : 'https://angel.dev/appstore/api';
+
+  const authenticate = async () => {
     const body = {
       api_key: apiKey,
       app_slug: appSlug,
       user_id: userId,
     };
 
-    return makeRequest('auth', body);
+    return makeRequest(`${baseUrl}/auth`, body);
   };
 
-  const getUserData = async ({ key, token }: GetUserDataParams) => {
+  const getUserData = async ({ key, token }: RequestParams) => {
     const body = {
       key,
       token,
     };
 
-    return makeRequest('get', body);
+    return makeRequest(`${baseUrl}/get`, body);
   };
 
-  const setUserData = async ({ key, token, value }: SetUserDataParams) => {
+  const setUserData = async ({ key, token, value }: RequestParams) => {
     const body = {
       key,
       token,
       value,
     };
 
-    return makeRequest('set', body);
+    return makeRequest(`${baseUrl}/set`, body);
   };
 
-  const submit = async ({ token }: SubmitParams) => {
-    return makeRequest('submit', { token });
+  const submit = async ({ token }: RequestParams) => {
+    return makeRequest(`${baseUrl}/submit`, { token });
   };
+
+  const makeRetryableRequest = (request: RequestType) => async (params: RequestParams) => {
+    let response;
+
+    try {
+      response = await request(params);
+    } catch {
+      const authorization = await authenticate();
+      response = await request({ ...params, token: authorization.token });
+
+      response = { ...response, authorization };
+    }
+
+    return response;
+  }
 
   return {
-    authorizeForUser,
-    getUserData,
-    setUserData,
-    submit,
+    authenticate,
+    getUserData: makeRetryableRequest(getUserData),
+    setUserData: makeRetryableRequest(setUserData),
+    submit: makeRetryableRequest(submit),
   };
 }
 
