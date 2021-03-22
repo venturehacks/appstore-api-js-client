@@ -118,19 +118,23 @@ describe('AngelListAppstoreApiClient', () => {
   });
 
   describe('submit', () => {
+    const results = {
+      score: 100,
+    }
+
     describe('a successful request', () => {
       beforeEach(() => {
-        fetch.mockImplementation(mockFetch({ value }));
+        fetch.mockImplementation(mockFetch({ results }));
       });
 
       it('submits data to the datastore', async () => {
-        const response = await apiClient.submit({ token, key, value });
-        expect(response).toEqual({ value });
+        const response = await apiClient.submit({ results, token });
+        expect(response).toEqual({ results });
       });
     });
 
     describe('an unsuccessful request', () => {
-      const request = async () => await apiClient.submit({ token: 'bad-token', key, value });
+      const request = async () => await apiClient.submit({ results, token: 'bad-token' });
       itBehavesLikeRetryableRequest(request);
     });
   });
