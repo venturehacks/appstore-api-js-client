@@ -51,7 +51,7 @@ try {
 Submit:
 ```
 try {
- await angelListAppstoreApiClient.submit({ token });
+ await angelListAppstoreApiClient.submit({ results, token });
 } catch (err) {
  handleError(err)
 }
