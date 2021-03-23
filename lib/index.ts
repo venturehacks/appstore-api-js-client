@@ -17,12 +17,9 @@ type ClientParams = {
 
 type RequestParams = {
   key?: string;
+  results?: {};
   token: string;
   value?: string;
-}
-
-interface SubmitParams extends RequestParams {
-  results: {};
 }
 
 type RequestType = (requestParams: RequestParams) => Promise<any>;
@@ -77,7 +74,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientPara
     return makeRequest(`${baseUrl}/set`, body);
   };
 
-  const submit = async ({ results, token }: SubmitParams) => {
+  const submit = async ({ results, token }: RequestParams) => {
     const body = {
       results,
       token,
