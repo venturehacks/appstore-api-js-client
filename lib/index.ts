@@ -10,8 +10,8 @@ type BodyType = {
 
 type ClientParams = {
   apiKey: string;
+  apiUrl: string;
   appSlug: string;
-  env: string;
   userId: string;
 }
 
@@ -42,9 +42,7 @@ const makeRequest = async (
   return response.json();
 };
 
-function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientParams) {
-  const baseUrl = env === 'production' ? 'https://angel.co/appstore/api' : 'https://angel.dev/appstore/api';
-
+function AngelListAppstoreApiClient({ apiKey, apiUrl, appSlug, userId }: ClientParams) {
   const authenticate = async () => {
     const body = {
       api_key: apiKey,
@@ -52,7 +50,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientPara
       user_id: userId,
     };
 
-    return makeRequest(`${baseUrl}/auth`, body);
+    return makeRequest(`${apiUrl}/auth`, body);
   };
 
   const getUserData = async ({ key, token }: RequestParams) => {
@@ -61,7 +59,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientPara
       token,
     };
 
-    return makeRequest(`${baseUrl}/get`, body);
+    return makeRequest(`${apiUrl}/get`, body);
   };
 
   const setUserData = async ({ key, token, value }: RequestParams) => {
@@ -71,7 +69,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientPara
       value,
     };
 
-    return makeRequest(`${baseUrl}/set`, body);
+    return makeRequest(`${apiUrl}/set`, body);
   };
 
   const submit = async ({ results, token }: RequestParams) => {
@@ -80,7 +78,7 @@ function AngelListAppstoreApiClient({ apiKey, appSlug, env, userId }: ClientPara
       token,
     };
 
-    return makeRequest(`${baseUrl}/submit`, body);
+    return makeRequest(`${apiUrl}/submit`, body);
   };
 
   const makeRetryableRequest = (request: RequestType) => async (params: RequestParams) => {
